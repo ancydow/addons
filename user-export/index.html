@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+
+<body>
+    <div>
+        <h1>PagerDuty Users CSV</h1> Subdomain:
+        <input type="text" name="subdomain">.pagerduty.com
+        <br> API token:
+        <input type="text" name="token">
+        <br>
+        <button type="button" onclick="exportToCSV()">Export</button>
+        <br>
+
+    </div>
+    <div>
+        <textarea name="CSVtextarea" id="CSVtextarea" style="width:90%;height:200px;"></textarea>
+        <br>
+        <button type="button" onclick="saveTextAsFile()">Download</button>
+    </div>
+    <script>
+        
+        // Handle onlclick and get Users 
+        function exportToCSV() {
+
+            var xmlhttp = new XMLHttpRequest();
+
+            xmlhttp.onreadystatechange = function() {
+                if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+                    UsersJSON2CSV(xmlhttp.responseText);
+                }
+            };
+
+            xmlhttp.open("GET", "https://" + document.querySelector('[name="subdomain"]').value + ".pagerduty.com/api/v1/users", true);
+            xmlhttp.setRequestHeader("Content-Type", "application/json");
+            xmlhttp.setRequestHeader("Accept", "application/vnd.pagerduty+json;version=1.1");            
+            xmlhttp.setRequestHeader("Authorization", "Token token=" + document.querySelector('[name="token"]').value);
+            xmlhttp.send();
+        }
+        
+        // parse User JSON to CSV and put it in the textarea
+        function UsersJSON2CSV(UsersJSON) {
+            var UsersData = JSON.parse(UsersJSON).users;
+            var CSV = "";
+            var headrow = "";
+
+            for (var index in UsersData[0]) {
+                headrow += index + ",";
+            }
+
+            CSV += headrow.slice(0, -1) + "\r\n";
+
+            for (var i = 0; i < UsersData.length; i++) {
+                var row = "";
+
+                for (var index in UsersData[i]) {
+                    row += '"' + UsersData[i][index] + '",';
+                }
+
+                CSV += row.slice(0, -1) + "\r\n";
+            }
+
+            document.getElementById("CSVtextarea").value = CSV;
+        }
+        
+        // download the textarea with the Users CSV
+        function saveTextAsFile() {
+            var textToWrite = document.getElementById("CSVtextarea").value
+            var textFileAsBlob = new Blob([textToWrite], {
+                type: 'text/plain'
+            });
+            var fileNameToSaveAs = "users.csv";
+
+            var downloadLink = document.createElement("a");
+            downloadLink.download = fileNameToSaveAs;
+            downloadLink.innerHTML = "Download File";
+            if (window.webkitURL != null) {
+                downloadLink.href = window.webkitURL.createObjectURL(textFileAsBlob);
+            } else {
+                downloadLink.href = window.URL.createObjectURL(textFileAsBlob);
+                downloadLink.onclick = destroyClickedElement;
+                downloadLink.style.display = "none";
+                document.body.appendChild(downloadLink);
+            }
+
+            downloadLink.click();
+        }
+    </script>
+</body>
+
+</html>
