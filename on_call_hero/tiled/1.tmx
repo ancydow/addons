@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.0" orientation="orthogonal" width="25" height="20" tilewidth="32" tileheight="32">
+ <properties>
+  <property name="possiblePoints" value="10000"/>
+  <property name="seconds" value="8"/>
+  <property name="text" value="Welcome to your first on-call.  Get to the pager before it escalates to your boss!"/>
+ </properties>
+ <tileset firstgid="1" name="Ground" tilewidth="32" tileheight="32">
+  <image source="../assets/Ground.png" width="32" height="32"/>
+  <tile id="0">
+   <properties>
+    <property name="type" value="ground"/>
+   </properties>
+  </tile>
+ </tileset>
+ <tileset firstgid="2" name="Hero" tilewidth="32" tileheight="32">
+  <image source="../assets/Hero.png" width="34" height="34"/>
+ </tileset>
+ <tileset firstgid="3" name="Pager" tilewidth="32" tileheight="32">
+  <image source="../assets/Pager.png" width="96" height="32"/>
+ </tileset>
+ <layer name="Ground" width="25" height="20" opacity="0.9">
+  <data encoding="base64" compression="zlib">
+   eJxjYBgFo2AUjIJRMApoCxjpYDYjDexhxEKTYw8jHTAAFGQAIw==
+  </data>
+ </layer>
+ <objectgroup name="Hero" width="25" height="20">
+  <object gid="2" x="11" y="596"/>
+ </objectgroup>
+ <objectgroup name="Pager" width="25" height="20">
+  <object gid="3" x="754" y="601"/>
+ </objectgroup>
+</map>
