@@ -69,7 +69,7 @@
 }
 
 function getData(apikey, subdomain) {
-    var pdURL = "https://" + "webdemo" + ".pagerduty.com/api/v1/reports/raw/incidents.csv?" +
+    var pdURL = "https://" + subdomain + ".pagerduty.com/api/v1/reports/raw/incidents.csv?" +
         "since=" + moment().startOf('day').add(-141, 'days').format() + "&" +
         "until=" + moment().startOf('day').add(-1, 'days').format() + "&filters%5Burgency%5D=high%2Clow";
 

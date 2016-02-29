@@ -1,0 +1,169 @@
+<html>
+<head><title>Install PagerDuty Add-ons</title>
+<link rel="stylesheet" media="all" href="lib/pagerduty-platform-base.css">
+<script src="lib/jquery.js"></script>
+<script src="lib/pdjs.js"></script>
+<script src="lib/addons.js"></script>
+<script src="lib/addonlib.js"></script>
+<script>
+$( document ).ready(function() {
+  console.log(addons)
+  // loop over addons
+   // Add to #addons_dropdown
+  $.each( addons, function( name, addon ) {
+    $("#addons_dropdown").append($("<option></option>").attr("value",name).text(name));
+  }); 
+
+  //update API keys if they are in the URL:
+  $("#master_subdomain").val(getParameterByName("subdomain"))
+  $("#master_apikey").val(getParameterByName("apikey"))
+
+});
+
+
+ 
+show_config = function(){
+  // update #addon_config to show the config for this addon
+  var addon = $("#addons_dropdown").val()
+  console.log("show_config: "+ addon)
+  console.log(addons[addon])
+  $("#addon_name").html(addons[addon].display || addon)
+  $("#addon_description").html(addons[addon].description || "")
+  $("#addon_summary").show(200)
+  
+  $("#base_url").val(addons[addon].url || ("https://pagerduty.github.io/addons/"+addon+"/index.html"))
+  
+  var config=addons[addon].config || {}
+  $("#addon_config").html("");
+  for(config_name in config) {
+    var options = config[config_name];
+    var type = options.type || "text";
+    console.log(type+":"+config_name)
+    var input = ""
+    switch(type) {
+      case "apikey":
+        input = "<input type='password' name='"+config_name+"' class='addon_config'>";
+        break;
+      case "select":
+        input = "<select name='"+config_name+"' class='addon_config'>"
+        for(value_name in options.values) {
+          input += "<option value='"+value_name+"'>"+options.values[value_name]+"</option>"
+        }
+        input += "</select>"
+        break;
+      case "multiselect":
+        input = "<select style='height: inherit;' multiple='multiple' size='5' name='"+config_name+"' class='addon_config'>"
+        for(value_name in options.values) {
+          input += "<option value='"+value_name+"'>"+options.values[value_name]+"</option>"
+        }
+        input += "</select>"
+        break;
+      case "text":
+        input = "<input type='text' name='"+config_name+"' class='addon_config'>";
+      default:
+    }
+    $("#addon_config").append("<div>"+(options.display||addon)+": </div>").append(input)
+  };
+  
+  if(jQuery.isEmptyObject(config)) {
+    $("#addon_config").html("No configuration required.")
+  }
+  
+  
+  
+}
+install_addon = function(){
+  // Hit the addon API to install addon with config specified
+  console.log("install_addon")
+  var base_url = $("#base_url").val()
+  console.log(base_url)
+  
+  var url = base_url  
+  // TODO: Add config parameters
+  
+  var post_data = {
+    "addon_id": "PHW8B63",
+    "config": {
+      "name": $("#addon_name").text(),
+      "url": url
+    }
+  }
+
+  PDJS = new PDJSobj({subdomain:$("#master_subdomain").val(), token:$("#master_apikey").val()})  
+  PDJS.api({
+    res: "accounts_addons",
+    type: "POST",
+    data: post_data,
+    success: function (json) {
+      console.log(json)
+      $("#success").html("<b>Success!</b><br><a href='https://"+$("#master_subdomain").val()+".pagerduty.com/accounts_addons/"+json.accounts_addon.id+"' target='_blank'>View in your account</a>").show(200)
+    }
+  })
+
+  // Handle errors
+  // Display success
+}
+
+
+</script>
+</head>
+<body>
+<style>
+@font-face {
+    font-family: colfax-light;
+    src: url(https://www.pagerduty.com/wp-content/themes/startit-child/fonts/ColfaxWebLight.woff);
+}
+
+p.step {
+  padding-top: 0.5em;
+  font-size: 110%;
+}
+body {
+  font-family: colfax-light, Colfax, 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  color: #333;
+}
+#addon_summary {
+  padding: 1em;
+  margin: 1em;
+  border: 1px solid #999;
+}
+#addon_name {
+  font-weight: bold;
+  color: black;
+  font-size: 110%;
+}
+#success {
+  border: 1px solid #0f0;
+  background-color: #dfd;
+  display: none;
+  padding: 1em;
+  margin: 1em;
+}
+</style>
+  
+<h1>Install Add-ons on your PagerDuty account</h1>
+
+<p class="step">Step 1: Enter your account information:</p>
+
+Full access API key:<input type="password" value="" id="master_apikey"/><br>
+Subdomain:<input type="text" value="" id="master_subdomain"/><br>
+
+<p class="step">Step 2: Select an Add-on:
+  <select id="addons_dropdown" onchange="show_config()"><option value="">Select an Add-on to install</select><br>
+</p>
+  <div style="display:none;" id="addon_summary">
+  <div id="addon_name"></div>
+  <div id="addon_description"></div>
+  </div>
+  <div style="display:none;">Base URL: <input type="text" id="base_url" value=""></div>
+
+<p class="step">Step 3: Configure it if needed:</p>
+
+  <div id="addon_config"></div>
+
+<p class="step">Step 4: Install:
+  <a class="btn" onclick="install_addon()">Install on my account</a>
+</p>
+<div id="success">Success! <a href="#">link</a></div>
+</body>
+</html>
