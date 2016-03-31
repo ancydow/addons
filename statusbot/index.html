@@ -28,8 +28,9 @@ h1 {
 
 <script type='text/javascript'>
 $(function() {
-  services=location.search.replace("?","").split("+");
-  if(services=="") services="twilio+tropo+mailgun"
+  services=decodeURI(location.search.replace("?",""))
+  if(services.length<2) services="twilio&tropo&mailgun"
+  services=services.split("&");
   for(i=0;i<services.length;i++) {
     loadstatus(services[i]);
   }
