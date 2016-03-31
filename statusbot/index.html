@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <script type="text/javascript" src="https://code.jquery.com/jquery-git.js"></script>
+
+
+  <style type="text/css">
+.statuses li {
+  color: red;
+}
+
+li.operational, li.good {
+  color: green;
+}
+.bad {
+  color: red;
+}
+td {
+  vertical-align: top;
+}
+h1 {
+  font-size: 120%;
+}
+  </style>
+
+  <title>Statusbot</title>
+
+<script type='text/javascript'>
+$(function() {
+  services=location.search.replace("?","").split("+");
+  if(services=="") services="twilio+tropo+mailgun"
+  for(i=0;i<services.length;i++) {
+    loadstatus(services[i]);
+  }
+});
+
+
+function loadstatus(tool) {
+  $.get("https://api.statusbot.io/v1/services/"+tool+"/components", function(d) {
+    console.log(d);
+    bad = false;
+    s = "<td><h1 id='"+d.service.name+"'>" + d.service.human_readable_name + "</h1><ul class='statuses'>"
+    for (i = 0; i < d.service.components.length; i++) {
+      s += "<li class='" + d.service.components[i].status_indicator + "'>" + (d.service.components[i].name || d.service.components[i].description) + ": " + d.service.components[i].status_indicator + "</li>"
+      if(d.service.components[i].status_indicator!="good") bad=true;
+    }
+    s += "</ul></td>"
+    $(".result").append(s);
+    if(bad) $("#"+d.service.name).addClass("bad")
+  });
+}
+
+
+</script>
+
+</head>
+
+<body>
+  <table>
+    <tr class="result">
+  </tr>
+  </table>
+</body>
+</html>
+
