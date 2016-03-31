@@ -28,9 +28,9 @@ h1 {
 
 <script type='text/javascript'>
 $(function() {
-  services=decodeURI(location.search.replace("?",""))
+  services=decodeURI(location.search.replace(/&.*/,"").replace(/[^a-z]/g," "))
   if(services.length<2) services="twilio&tropo&mailgun"
-  services=services.split("&");
+  services=services.split(" ");
   for(i=0;i<services.length;i++) {
     loadstatus(services[i]);
   }
@@ -38,6 +38,7 @@ $(function() {
 
 
 function loadstatus(tool) {
+  if(tool.length<2) return;
   $.get("https://api.statusbot.io/v1/services/"+tool+"/components", function(d) {
     console.log(d);
     bad = false;
