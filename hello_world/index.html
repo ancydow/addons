@@ -1,0 +1,10 @@
+<h1 id='heading'>
+loading...
+</h1>
+<script>
+console.log(location)
+if(location.hash) {
+  name = decodeURI(location.hash).replace(/.*\] /,"")
+  document.getElementById('heading').innerHTML = name;
+}
+</script>

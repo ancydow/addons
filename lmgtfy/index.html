@@ -1,0 +1,23 @@
+Resources:
+<ul id="resources">
+  
+</ul>
+<script type="text/javascript" src="../lib/jquery.js"></script>
+<script>
+console.log(location)
+resources = {
+  "StackOverflow": "https://stackoverflow.com/search?q=",
+  "ServerFault": "https://serverfault.com/search?q=",
+  "Google": "https://www.google.com/#q=",
+  "DuckDuckGo": "https://duckduckgo.com/?q=",
+  "Ask Jeeves": "http://www.ask.com/web?q="
+}
+
+if(location.hash) {
+  query = decodeURI(location.hash).replace(/.*\] /,"")
+  for (var r in resources) {
+    $("#resources").append("<li><a target='lookup' href='"+resources[r]+query+"'>Look up on "+r+"</a>")
+  }
+  
+}
+</script>
