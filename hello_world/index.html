@@ -1,10 +1,13 @@
-<h1 id='heading'>
+<style>body {background-color:#eee; font-size:200%;}</style>
+<marquee behavior="alternate"><h1 id='heading'>
 loading...
-</h1>
+</h1></marquee>
+<marquee behavior="alternate"><h2>You can do this!</h2></marquee>
+
 <script>
 console.log(location)
 if(location.hash) {
-  name = decodeURI(location.hash).replace(/.*\] /,"")
+  name = decodeURI(location.hash).replace(/.*#/,"")
   document.getElementById('heading').innerHTML = name;
 }
 </script>
