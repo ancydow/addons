@@ -19,5 +19,5 @@ $ ->
   $('.h-page').html pageView.el
 
   since = Moment()
-  till = since.clone().add(4, 'week')
+  till = since.clone().add(3, 'month')
   fullyFetch(schedules, {since, till})
