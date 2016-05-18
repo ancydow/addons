@@ -5,7 +5,7 @@ Schedules = require('./model/schedules')
 Conflicts = require('./model/conflicts')
 Page = require('./view/page')
 UrlParams = require('./lib/url_params')
-fetchAllSchedules = require('./view/can_fetch_schedules').fetchAllSchedules
+fullyFetch = require('./view/can_fetch_schedules').fullyFetch
 
 $ ->
   subdomain = UrlParams.get('subdomain')
@@ -20,4 +20,4 @@ $ ->
 
   since = Moment()
   till = since.clone().add(4, 'week')
-  fetchAllSchedules(schedules, {since, till})
+  fullyFetch(schedules, {since, till})
