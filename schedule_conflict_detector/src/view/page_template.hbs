@@ -1,0 +1,18 @@
+<div>
+  <h1>Detect Schedule Conflicts</h1>
+    <p>This tool allows you to see which users in your PagerDuty account are listed as being on-call on multiple schedules at the same time</p>
+    <p>Note: this tool will only show the schedules that the user is on-call, but will not take the Escalation policy into account.</p>
+    <p class="h-is-searching">
+      {{#if isFetching}}
+        Searching for conflicts...
+      {{/if}}
+    </p>
+    <p class="h-no-conflicts">
+      {{#if hasNoConflicts}}
+        No users are on-call across multiple schedules at the same time.
+      {{/if}}
+    </p>
+    <div class="h-conflicts-table"></div>
+  <hr>
+  <p> This is a project of PagerDuty Labs and we don't guarantee it will have the same reliability as the core product.</p>
+</div> 
