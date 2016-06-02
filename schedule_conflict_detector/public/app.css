@@ -11,3 +11,7 @@ table {
 th, td {
     padding: 10px;
 }
+
+td a {
+    display: block
+}
