@@ -1,1 +1,29 @@
-test
+<h2>PagerDuty Users Not On-Call</h2>
+
+<div>
+    <form name="myform" method="post">
+        <table>
+            <tr>
+                <td>Subdomain:</td>
+                <td>
+                    <input type="text" name="subdomain" placeholder="ogl-ops" value="" />.pagerduty.com</td>
+            </tr>
+            <tr>
+                <td>API v1 Key:</td>
+                <td>
+                    <input type="text" name="api_token" placeholder="20 character string" value="" />
+                </td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>
+                <button type="submit" class="btn btn-primary">Get Users</button>
+                </td>
+            </tr>
+        </table>
+    </form>
+</div>
+<h2>Users not on-call:</h2>
+<ul>
+  <div id="bad_users"></div>
+</ul>
