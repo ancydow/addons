@@ -8,7 +8,7 @@
 <h2>PagerDuty Users Not On-Call</h2>
 
 <div>
-    <form name="myform" onsubmit="check_users()" method="get">
+    <form name="myform" method="get">
         <table>
             <tr>
                 <td>Subdomain:</td>
@@ -24,7 +24,7 @@
             <tr>
                 <td></td>
                 <td>
-                <button type="submit" class="btn btn-primary">Get Users</button>
+                <button type="submit" class="btn btn-primary" onclick="check_users()">Get Users</button>
                 </td>
             </tr>
         </table>
