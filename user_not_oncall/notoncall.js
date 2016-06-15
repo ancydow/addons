@@ -1,7 +1,7 @@
-var form = document.forms.myform,
-    elem = form.elements;
 
-form.onsubmit = function () {
+check_users = function () {
+    var form = document.forms.myform,
+    elem = form.elements;
     $("#bad_users").empty();
     PDJS = new PDJSobj({
         subdomain: form.subdomain.value,
