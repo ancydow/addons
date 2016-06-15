@@ -1,7 +1,7 @@
 var form = document.forms.myform,
     elem = form.elements;
 
-form.onclick = function () {
+form.onsubmit = function () {
     $("#bad_users").empty();
     PDJS = new PDJSobj({
         subdomain: form.subdomain.value,
