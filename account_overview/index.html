@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html>
+<head>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/qtip2/2.2.0/jquery.qtip.min.css" rel="stylesheet" type="text/css" />
+<style>
+body { 
+  font: 14px helvetica neue, helvetica, arial, sans-serif;
+}
+
+#cy {
+  height: 100%;
+  width: 100%;
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+</style>
+<meta charset=utf-8 />
+<meta name="viewport" content="user-scalable=no, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, minimal-ui">
+<title>Account Overview</title>
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fastclick/1.0.6/fastclick.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/3.10.0/lodash.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-slider/4.10.3/bootstrap-slider.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/2.7.0/cytoscape.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qtip2/2.2.0/jquery.qtip.min.js"></script>
+<script src="https://cdn.rawgit.com/cytoscape/cytoscape.js-qtip/2.2.5/cytoscape-qtip.js"></script>
+
+</head>
+<body>
+<script>
+$(function(){
+	var registry = new Map();
+	var edges = [];
+	var nodes = [];
+
+	var TYPE_TEAM = 'team';
+	var TYPE_EP = 'ep';
+	var TYPE_INTEGRATION = 'integration';
+	var TYPE_VENDOR = 'vendor';
+	var TYPE_USER = 'user';
+	var TYPE_SERVICES = 'services';
+	var TYPE_SCHEDULES = 'schedules';
+
+	var TYPE_TO_X_OFFSET = {}
+	TYPE_TO_X_OFFSET[TYPE_VENDOR] = 0;
+	TYPE_TO_X_OFFSET[TYPE_TEAM] = 500;
+	TYPE_TO_X_OFFSET[TYPE_INTEGRATION] = 500;
+	TYPE_TO_X_OFFSET[TYPE_SERVICES] = 1000;
+	TYPE_TO_X_OFFSET[TYPE_EP] = 1500;
+	TYPE_TO_X_OFFSET[TYPE_SCHEDULES] = 2000;
+	TYPE_TO_X_OFFSET[TYPE_USER] = 2500;
+
+	var type_to_next_y_offset = new Map();
+	var max_team_y_offset = 0;
+
+	type_to_next_y_offset[TYPE_USER] = 0;
+	type_to_next_y_offset[TYPE_VENDOR] = 0;
+	type_to_next_y_offset[TYPE_TEAM] = 0;
+	type_to_next_y_offset[TYPE_SCHEDULES] = 0;
+
+
+	function add_node(id, type, name, url, parent=null, x=null, y=null) {
+		var node_id = type + id;
+		if (!registry.has(node_id)) {
+			var obj = {
+				data: {
+					id: node_id,
+					url: url,
+					name: name,
+				}
+			};
+			if (parent) {
+				obj.data.parent = parent;
+			}
+
+			x_pos = TYPE_TO_X_OFFSET[type];
+			y_pos = null;
+			if (!parent) {
+				if (type == TYPE_TEAM) {
+					max_team_y_offset += 50;
+					type_to_next_y_offset[TYPE_INTEGRATION] = max_team_y_offset;
+					type_to_next_y_offset[TYPE_SERVICES] = max_team_y_offset;
+					type_to_next_y_offset[TYPE_EP] = max_team_y_offset;
+					type_to_next_y_offset[TYPE_SCHEDULES] = max_team_y_offset;
+					type_to_next_y_offset[TYPE_USER] = max_team_y_offset;
+				} else if (type != TYPE_VENDOR && type != TYPE_USER && type != TYPE_SCHEDULES) {
+					alert('Unknown type: '+type);
+				}
+			} else {
+				y_pos = type_to_next_y_offset[type];
+				type_to_next_y_offset[type] += 50;
+				if (type == TYPE_VENDOR) {
+					type_to_next_y_offset[type] += 300;
+				}
+				if (type == TYPE_EP || type == TYPE_SERVICES || type == TYPE_INTEGRATION) {
+					max_team_y_offset = Math.max(max_team_y_offset, y_pos);
+				}
+			}
+			if (y_pos != null) {
+				obj['position'] = { x: x_pos, y: y_pos };
+			}
+
+			nodes.push(obj);
+			registry.set(node_id, 1);		
+		}
+		return node_id;
+	}
+
+	function add_relation(fromId, toId) {
+		edges.push(
+			{ 
+				data: {
+					id: fromId + toId,
+					source: fromId,
+					target: toId
+				}
+			}
+		);
+	}
+
+	function add_team(elem) {
+		return add_node(elem['id'], TYPE_TEAM, elem['summary'], elem['html_url'], null);
+	}
+
+	function add_service(elem, team_id) {
+		service_node_id = add_node(team_id, TYPE_SERVICES, 'Services', null, team_id);
+		return add_node(elem['id'], TYPE_SERVICES, elem['summary'], elem['html_url'], service_node_id);
+	}
+
+	function add_escalation_policy(elem, team_id) {
+		ep_node_id = add_node(team_id, TYPE_EP, 'Escalation Policies', null, team_id);
+		return add_node(elem['id'], TYPE_EP, elem['name'], elem['html_url'], ep_node_id);
+	}
+
+	function add_integration(elem, team_id) {
+  	int_node_id = add_node(team_id, TYPE_INTEGRATION, 'Integrations', null, team_id);
+  	return add_node(elem['id'], TYPE_INTEGRATION, elem['name'], elem['html_url'], int_node_id);
+	}
+
+	function add_vendor(elem, vendor_group_id) {
+		return add_node(elem['id'], TYPE_VENDOR, elem['summary'], null, vendor_group_id);
+	}
+
+	function add_user(elem) {
+		var user_group_id = add_node('users', TYPE_USER, 'Users', null);
+		return add_node(elem['id'], TYPE_USER, elem['summary'], elem['html_url'], user_group_id);
+	}
+
+	function add_schedule(elem) {
+		var node_id = elem['id'] + TYPE_SCHEDULES;
+		var node_exists = registry.has(node_id);
+		var schedulesGroupId = add_node('schedules', TYPE_SCHEDULES, 'Schedules', null);
+		var node = add_node(elem['id'], TYPE_SCHEDULES, elem['name'], elem['html_url'], schedulesGroupId);
+
+		if (!node_exists) {
+			$.each(elem['users'], function(index, element) {
+				var user_id = add_user(element);
+				add_relation(node, user_id);
+			});
+		}
+
+		return node;
+	}
+
+	function getUserNodeId(id) {
+		return TYPE_USER + id;
+	}
+
+	var services_map = new Map();
+
+	var parse_service = function(data) {
+		$.each(data['services'], function(index, element) {
+			var team_id = 'NoTeam'
+			if (element.teams.length == 1) {
+				team_id = element.teams[0]['id'];
+			}
+			if (!services_map.has(team_id)) {
+				services_map.set(team_id, []);
+			}
+			services_map.get(team_id).push(element);
+		});
+
+		if (data['more']) {
+			var offset = data['offset'] + data['limit'];
+			requestServices(offset, data['limit']);
+		} else {
+			really_parse_services();
+			render_graph();
+		}
+	}
+
+	function really_parse_services() {
+		for (var [team_idx, elements] of services_map) {
+			$.each(elements, function(idx, element) {
+				var teamId;
+				if (element.teams.length == 1) {
+					teamId = add_team(element.teams[0]);
+				} else {
+					teamId = add_team({id: 'NoTeam', summary: 'Teamless', html_url: null});
+					if (element.teams.length > 1) {
+						alert("Service " +element.name+" is linked to more than one team");
+					}
+				}
+
+				var serviceId = add_service(element, teamId);
+				if (element.escalation_policy) {
+					var epId = add_escalation_policy(element.escalation_policy, teamId);
+					add_relation(serviceId, epId);
+
+					$.each(element['escalation_policy']['escalation_rules'], function (erIdx, escalation_rules) {
+						$.each(escalation_rules['targets'], function(intIdx, er) {
+							if (er['type'] == 'user_reference') {
+								var user = user_id_to_user.get(er['id']);
+								var userNodeId = add_user(user);
+								add_relation(epId, userNodeId);
+							} else if (er['type'] == 'schedule_reference') {	
+								var schedule = schedule_id_to_schedule.get(er['id']);
+								var schedule_node = add_schedule(schedule);
+								add_relation(epId, schedule_node);
+							}
+						});
+					});
+				}
+
+				$.each(element['integrations'], function(intIdx, integration) {
+					var integrationId = add_integration(integration, teamId);
+					add_relation(integrationId, serviceId);
+					if (integration.vendor) {
+						var vendorGroupId = add_node('vendors', TYPE_VENDOR, 'Vendors', null);
+						var vendorId = add_vendor(integration.vendor, vendorGroupId);
+						add_relation(vendorId, integrationId);
+					}
+				});
+			});
+		};
+		services_map = null;
+	}
+
+	var user_id_to_user = new Map();
+
+	var parse_users = function(data) {
+		var users_group_id = add_node('users', TYPE_USER, 'Users', null);
+		$.each(data['users'], function(index, element) {
+			user_id_to_user.set(element['id'], element);
+		});
+
+		if (data['more']) {
+			var offset = data['offset'] + data['limit'];
+			requestUsers(offset, data['limit']);
+		} else {
+			requestSchedules(0, 25);
+		}
+	}
+
+	var schedule_id_to_schedule = new Map();
+
+	var parse_schedules = function(data) {
+		$.each(data['schedules'], function(index, schedule) {
+			var schid = schedule['id'];
+			schedule_id_to_schedule.set(schid, schedule);
+		});
+		if (data['more']) {
+			var offset = data['offset'] + data['limit'];
+			requestSchedules(offset, data['limit']);
+		} else {
+			requestServices(0, 25);
+		}
+	}
+
+	function render_graph() {
+		var cy = cytoscape({
+		  container: document.getElementById('cy'),
+
+		  boxSelectionEnabled: false,
+		  autounselectify: true,
+
+		  style: [
+		    {
+		      selector: 'node',
+		      css: {
+		        'content': 'data(name)',
+		        'text-valign': 'center',
+		        'text-halign': 'center',
+		      }
+		    },
+		    {
+		      selector: ':parent',
+		      style: {
+		        'background-opacity': 0.333
+		      }
+		    },
+		    {
+		      selector: '$node > node',
+		      css: {
+		        'padding-top': '10px',
+		        'padding-left': '10px',
+		        'padding-bottom': '10px',
+		        'padding-right': '10px',
+		        'text-valign': 'top',
+		        'text-halign': 'center',
+		        'background-color': '#aaa'
+		      }
+		    },
+		    {
+		      selector: 'edge',
+		      css: {
+						'width': 2,
+		        'target-arrow-shape': 'triangle',
+		        'background-opacity': 0.333,
+		        'background-color': '#61bffc',
+		        'line-color': '#61bffc',
+		        'target-arrow-color': '#61bffc',
+		      }
+		    },
+		    {
+		      selector: ':selected',
+		      css: {
+		        'background-color': 'black',
+		        'line-color': 'black',
+		        'target-arrow-color': 'black',
+		        'source-arrow-color': 'black'
+		      }
+		    },
+		    {
+		    	selector: '.highlighted',
+	      	css: {
+						'width': 6,
+	      		'background-color': '#0DFC00',
+		        'line-color': '#0DFC00',
+		        'target-arrow-color': '#0DFC00',
+		        'transition-property': 'background-color, line-color, target-arrow-color',
+		        'transition-duration': '0.5s'
+	      	}
+	    }
+		  ],
+
+		  elements: {
+		    nodes: nodes,
+		    edges: edges
+		  },
+
+		  layout: {
+  			name: 'preset',
+		    padding: 5,
+		    directed: true,
+		  }
+		}); 	
+	 	var last_node = null;
+	  cy.on('tap', 'node', function(){
+	  	if (last_node) {
+	  		last_node.successors(function(){return this.isEdge();}).removeClass('highlighted');
+				last_node.predecessors(function(){return this.isEdge();}).removeClass('highlighted');
+	  	}
+			this.successors(function(){return this.isEdge();}).addClass('highlighted');
+			this.predecessors(function(){return this.isEdge();}).addClass('highlighted');
+			last_node = this;
+	  });
+
+	  cy.nodes().forEach(function(n){
+		  var url = n.data('url');
+		  if (url) {
+  	    n.qtip({
+	      content: [
+	        {
+	          name: 'View in PagerDuty',
+	          url: url
+	        },
+	        ].map(function( link ){
+		        return '<a target="_blank" href="' + link.url + '">' + link.name + '</a>';
+		      }).join('<br />\n'),
+
+		      position: {
+		        my: 'top center',
+		        at: 'bottom center'
+		      },
+		      style: {
+		        classes: 'qtip-bootstrap',
+		        tip: {
+		          width: 16,
+		          height: 8
+		        }
+		      }
+				});
+  	  }
+		});
+};
+
+function getParameterByName(name) {
+  name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+  var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
+      results = regex.exec(location.search);
+  return results === null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
+}
+
+var API_TOKEN = getParameterByName('apikey')
+
+function pagerdutyRequest(endpoint, options) {
+  $.ajax($.extend({}, {
+  	type: 'GET',
+  	dataType: 'json',
+  	url: "https://api.pagerduty.com/" + endpoint,
+
+    headers: {
+     "Authorization": "Token token=" + API_TOKEN,
+     "Accept": "application/vnd.pagerduty+json;version=2",
+    }
+  },
+  options));
+}
+
+function requestUsers(offset, limit=25) {
+	var endpoint = 'users?offset='+offset+'&limit='+limit+'&include%5B%5D=teams';
+	pagerdutyRequest(endpoint, { success: parse_users });
+}
+
+function requestServices(offset, limit=25) {
+	var endpoint = 'services?offset='+offset+'&limit='+limit+'&time_zone=UTC&sort_by=name&include%5B%5D=escalation_policies&include%5B%5D=teams&include%5B%5D=integrations'
+	pagerdutyRequest(endpoint, { success: parse_service });
+}
+
+function requestSchedules(offset, limit=25) {
+	var endpoint = 'schedules?offset='+offset+'&limit='+limit;
+	pagerdutyRequest(endpoint, { success: parse_schedules });
+}
+requestUsers(0, 25);
+
+});
+</script>
+<div id="cy"></div>
+</body>
+</html>
